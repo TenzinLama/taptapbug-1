@@ -1,0 +1,13 @@
+#myCanvas{
+	border: 2px solid blue;
+}
+#gameMenu{
+	height: 40px;
+	width: 600px;
+	background-color: yellow;
+	border: 2px solid blue;
+}
+.inGameMenu{
+	width: 32%;
+	display: inline-block;
+}
