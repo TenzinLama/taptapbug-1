@@ -53,8 +53,6 @@ function makeWhiteToTransparent(imgData){
 		}
 	}
 }
-
-
 // define the position class
 function Position(x, y){
 	this.x = x;
@@ -72,9 +70,10 @@ function Bug(){
 	this.speed = bugSpeed[level-1][bugType];
 	this.score = bugScore[bugType];
 	this.image = bugImage[bugType];
+	this.status = ACTIVE;  
 	var randomX = randomIntergerBetweenRange(bugXCoordinateMin, bugXCoordinateMax);
 	this.position = new Position(randomX, bugYCoordinateInitial);
-	this.status = ACTIVE;  
+	
 }//finished
 
 // define the Food class
@@ -132,7 +131,9 @@ function importFoodImage(){
 function drawAll(){
 	drawGameEnvironment();
 	for(var bug in bugs){
+		 // alert(bug.color);
 		if (bug.status == ACTIVE){
+			alert("bug staus is ACTIVE");
 			ctx.putImageData(bug.image, Math.floor(bug.position.x - bugRadius/2), Math.floor(bug.position.y - bugRadius/2));
 		}
 	}
@@ -167,6 +168,7 @@ function isGameOver(){
 
 function generateOneBug(){
 	bugs.push(new Bug);
+	// alert(bugs.length);
 	var generateBugTimeout = setTimeout(generateOneBug, Math.floor(randomFloatBetweenRange(1,3)*1000));
 }
 
@@ -182,9 +184,9 @@ window.onload = function(){
 	drawAndSaveBugImage();  
 	importFoodImage();
 	drawGameEnvironment();
-	b = new Bug();
-	ctx.putImageData(b.image, Math.floor(b.position.x - bugRadius/2), Math.floor(b.position.y - bugRadius/2));
-	// startNewGame(level);
+	// b = new Bug();
+	// ctx.putImageData(b.image, Math.floor(b.position.x - bugRadius/2), Math.floor(b.position.y - bugRadius/2));
+	startNewGame(level);
 	// isGameOver();
 };
 
