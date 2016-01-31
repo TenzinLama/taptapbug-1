@@ -32,6 +32,7 @@ var bugs;
 var foods;
 
 
+
 //generate random integer between min and max inclusive (tested correct)
 function randomIntergerBetweenRange(min, max){
 	var r = Math.random(); //Return a random number between 0 (inclusive) and 1 (exclusive)
@@ -44,6 +45,16 @@ function randomFloatBetweenRange(min, max){
 	return r * (max - min) + min;
 }//finished
 
+function makeWhiteToTransparent(imgData){
+	for (var i=0;i<imgData.data.length;i+=4)
+	{
+	    if(imgData.data[i+0]==0 && imgData.data[i+1]==0 && imgData.data[i+2]==0){
+	    	imgData.data[i+3] = 0;
+		}
+	}
+}
+
+
 // define the position class
 function Position(x, y){
 	this.x = x;
@@ -55,10 +66,10 @@ function Position(x, y){
 } //finished
 
 // define the Bug class
-function Bug(level){
+function Bug(){
 	var bugType = randomIntergerBetweenRange(0, 2);
 	this.color = bugColor[bugType];
-	this.speed = bugSpeed[level][bugType];
+	this.speed = bugSpeed[level-1][bugType];
 	this.score = bugScore[bugType];
 	this.image = bugImage[bugType];
 	var randomX = randomIntergerBetweenRange(bugXCoordinateMin, bugXCoordinateMax);
@@ -116,9 +127,7 @@ function importFoodImage(){
 }
 
 
-function oneBugEnterScreen(){
-	bugs.push(new Bug);
-}
+
 
 function drawAll(){
 	drawGameEnvironment();
@@ -156,19 +165,29 @@ function isGameOver(){
 	}
 }
 
+function generateOneBug(){
+	bugs.push(new Bug);
+	var generateBugTimeout = setTimeout(generateOneBug, Math.floor(randomFloatBetweenRange(1,3)*1000));
+}
+
 // attach time events and click events
 function startNewGame(level){
 	bugs = [];
 	generateFood(foodInitNumber);
-	setInterval(drawAll, 200);
-	s
+	var drawAllInterval = setInterval(drawAll, 200);
+	var generateBugTimeout = setTimeout(generateOneBug, Math.floor(randomFloatBetweenRange(1,3)*1000));
 }
 //main
 window.onload = function(){  
 	drawAndSaveBugImage();  
 	importFoodImage();
 	drawGameEnvironment();
-	startNewGame(level);
+	b = new Bug();
+	ctx.putImageData(b.image, Math.floor(b.position.x - bugRadius/2), Math.floor(b.position.y - bugRadius/2));
+	// startNewGame(level);
 	// isGameOver();
 };
+
+
+
 
