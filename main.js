@@ -12,11 +12,16 @@ var bugSpeed = [[150, 75, 60], [200, 100, 80]];
 var bugScore = [5, 3, 1];
 var bugColorProbability = [0.3, 0.3, 0.4];
 var bugImage = [];   //need to be initialized
+var bugImageElement = [
+	document.getElementById("blackBugImage"),
+	document.getElementById("redBugImage"),
+	document.getElementById("orangeBugImage")
+];
 var foodImage;
 var canvasWidth = 600;
 var canvasHeight = 400;
-var bugRadius = 20;   //need to adjust
-var foodRadius = 20;   //need to adjust
+var bugRadius = 30;   //do not change it
+var foodRadius = 30;  
 var bugXCoordinateMin = bugRadius;   
 var bugXCoordinateMax = canvasWidth - bugRadius;
 var bugYCoordinateInitial = bugRadius;    
@@ -38,11 +43,10 @@ var foods;
 var intervalTime = 20;  //200ms
 var bugEatFoodDistance = 20;
 var score = 0;
-var TOTALTIME = 15;
+var TOTALTIME = 60;   //change to 60 later
 var highScore = 0;
 
-localStorage.setItem("highScore", 0);
-
+// localStorage.setItem("highScore", 0);
 
 //generate random integer between min and max inclusive (tested correct)
 function randomIntergerBetweenRange(min, max){
@@ -63,6 +67,10 @@ function makeWhiteToTransparent(imgData){
 	    	imgData.data[i+3] = 0;
 		}
 	}
+}
+function ctxRotateDegree(degree){
+	// alert("enter");
+	ctx.rotate(degree * Math.PI / 180);
 }
 // define the position class
 function Position(x, y){
@@ -93,10 +101,22 @@ function Bug(){
 	this.color = bugColor[bugType];
 	this.speed = bugSpeed[level-1][bugType];
 	this.score = bugScore[bugType];
-	this.image = bugImage[bugType];
+	this.image = bugImageElement[bugType];
 	this.status = ACTIVE;  
 	var randomX = randomIntergerBetweenRange(bugXCoordinateMin, bugXCoordinateMax);
 	this.position = new Position(randomX, bugYCoordinateInitial);
+	this.angle = 0;  //degree of angle representing orientation
+	this.axisPostion = new Position(0, 0); //???
+
+	this.draw = function(){
+		this.axisPostion.x = this.position.x + bugRadius / 2 * Math.sin(this.angle * Math.PI / 180) - bugRadius / 2 * Math.cos(this.angle * Math.PI / 180);
+		this.axisPostion.y = this.position.y - bugRadius / 2 * Math.sin(this.angle * Math.PI / 180) - bugRadius / 2 * Math.cos(this.angle * Math.PI / 180);
+		ctx.translate(this.axisPostion.x, this.axisPostion.y);
+		ctxRotateDegree(this.angle);
+		ctx.drawImage(this.image, 0, 0);
+		ctxRotateDegree(-this.angle);
+		ctx.translate(-this.axisPostion.x, -this.axisPostion.y);
+	}	
 
 	this.getFoodTarget = function(){
 		var nearestFoodDistance = Math.sqrt(canvasHeight * canvasHeight + canvasWidth * canvasWidth);
@@ -164,17 +184,61 @@ function Bug(){
 			return;
 		}
 	}
-	this.changePosition = function(){
-		this.position.x += this.speedX * intervalTime / 1000;
-		this.position.y += this.speedY * intervalTime / 1000;
+	this.changePosition = function(makeWay){
+		if(makeWay == 0){
+			this.position.x += this.speedX * intervalTime / 1000;
+			this.position.y += this.speedY * intervalTime / 1000;
+		}
+		else if(makeWay == 1){
+			console.log("right");
+			var makeWaySpeedX = - this.speedY;
+			var makeWaySpeedY = this.speedX;
+			this.position.x += makeWaySpeedX * intervalTime / 1000;
+			this.position.y += makeWaySpeedY * intervalTime / 1000;
+			this.getFoodTarget();
+			this.getXYSpeed();
+			this.getAngle();
+		}
+		else{
+			console.log("left");
+			var makeWaySpeedX = this.speedY;
+			var makeWaySpeedY = -this.speedX;
+			this.position.x += makeWaySpeedX * intervalTime / 1000;
+			this.position.y += makeWaySpeedY * intervalTime / 1000;
+			this.getFoodTarget();
+			this.getXYSpeed();
+			this.getAngle();
+		}
 	}
 	this.isNearFoodTarget = function(){
 		var foodTargetPosition = foods[this.foodTargetIndex].position;
 		return this.position.getDistance(foodTargetPosition.x, foodTargetPosition.y) < bugEatFoodDistance;
 	}
+	this.getAngle = function(){
+		var x = this.position.x;
+		var y = this.position.y;
+		var foodX = foods[this.foodTargetIndex].position.x;
+		var foodY = foods[this.foodTargetIndex].position.y;
+		if (foodY == y) {
+			if(foodX < x){
+				this.angle = 90;
+				return;
+			}
+			else{
+				this.angle = -90;
+				return;
+			}
+		}
+		var degree = Math.atan((x - foodX) / (foodY - y)) / Math.PI * 180;
+		this.angle = degree;
+		if(foodY < y){
+			this.angle += 180;
+		}
+	}
 	this.getFoodTarget();
 	this.getXYSpeed();
-}//finished
+	this.getAngle();
+}
 
 // define the Food class
 function Food(){
@@ -183,7 +247,7 @@ function Food(){
 	var randomY = randomIntergerBetweenRange(foodYCoordinateMin, foodYCoordinateMax);
 	this.position = new Position(randomX, randomY);
 	this.status = EXIST;
-}//finished
+}
 
 //randomly generate n food object with random position
 function generateFood(n){
@@ -195,7 +259,7 @@ function generateFood(n){
 	// for(i=0; i<foods.length; i++){
 	// 	ctx.putImageData(foodImage, Math.floor(foods[i].position.x - foodRadius/2), Math.floor(foods[i].position.y - foodRadius/2));
 	// }
-} //finished
+}
 
 //draw the game background
 function drawGameEnvironment(){
@@ -203,27 +267,53 @@ function drawGameEnvironment(){
 	ctx.fillRect(0,0,600,400);
 }
 
-// draw the image of three colors of bugs and save them to blackBugImage, redBugImage and orangeBugImage
+//draw the image of three colors of bugs and save them to blackBugImage, redBugImage and orangeBugImage
 function drawAndSaveBugImage(){
-	//FOR TEST
-	ctx.fillStyle = "black";
-	ctx.fillRect(0,0,20,20);
-	bugImage[BLACK] = ctx.getImageData(0,0,20,20);
+	canvas.width = 30;
+	canvas.height = 30;
+	// var bugx = 20;
+	// var bugy = 50;
 
-	ctx.fillStyle = "red";
-	ctx.fillRect(0,0,20,20);
-	bugImage[RED] = ctx.getImageData(0,0,20,20);
+	var bugx = 15;
+	var bugy = 11;
 
-	ctx.fillStyle = "orange";
-	ctx.fillRect(0,0,20,20);
-	bugImage[ORANGE] = ctx.getImageData(0,0,20,20);
+	var rectx = 40;
+	var recty = 50;
+
+	var leftOffSetx = 20;
+	var leftOffSety = 20;
+
+	makeBug(bugx,bugy + 10,"black");
+	bugImageElement[BLACK].src = canvas.toDataURL();
+	// bugImage[BLACK] = ctx.getImageData(bugx - leftOffSetx,bugy - leftOffSety,rectx,recty);
+	// bugImage[BLACK] = canvas.toDataURL();
+	makeBug(bugx,bugy + 10,"red");
+	bugImageElement[RED].src = canvas.toDataURL();
+	// bugImage[RED] = ctx.getImageData(bugx - leftOffSetx,bugy-leftOffSety,rectx, recty);
+	// bugImage[RED] = canvas.toDataURL();
+	
+
+	makeBug(bugx,bugy + 10,"orange");
+	bugImageElement[ORANGE].src = canvas.toDataURL();
+
+	canvas.width = 600;
+	canvas.height = 400;
+
+	ctx.translate(100,100);
+	ctxRotateDegree(30);
+	ctx.drawImage(bugImageElement[RED],0, 0);
+	ctxRotateDegree(-30);
+	ctx.translate(-100,-100);
 }
 
 // import food image and save to variable foodImage 
 function importFoodImage(){
-	ctx.fillStyle = "blue";
-	ctx.fillRect(0,0,20,20);
-	foodImage = ctx.getImageData(0,0,20,20);
+	foodImage = document.getElementById("foodImage");
+	// alert("h");
+	ctx.drawImage(foodImage,50,50);
+	// ctx.fillStyle = "blue";
+	// ctx.fillRect(0,0,20,20);
+	//foodImage = ctx.getImageData(50,50,20,20);
 }
 
 function gameLose(){
@@ -231,18 +321,26 @@ function gameLose(){
 	clearInterval(generateBugTimeout);
 	clearInterval(drawAllInterval);
 	stopMouseClickEvent();
-	if(score > highScore){
-		highScore = score;
-	}
-	localStorage.setItem("highScore", highScore);
+	updateHighScore();
+	// if(score > highScore){
+	// 	highScore = score;
+	// }
+	// localStorage.setItem("highScoreForLevel" + level.toString(), highScore);
 	disablePauseButton();
 	alert("Game Over");
 }
-
+function updateHighScore(){
+	var key = "highScoreForLevel" + level.toString();
+	var highScore = localStorage.getItem(key);
+	if(score > highScore){
+		localStorage.setItem(key, score.toString());
+	}
+}
 function drawAll(){
 	var currentTime = new Date().getTime();
 	var timeLeft = Math.ceil(TOTALTIME - (currentTime - startTime) / 1000 );
 	if (timeLeft <= 0){
+		updateHighScore();
 		if(level == 1){
 			level = 2;
 			clearInterval(generateBugTimeout);
@@ -254,10 +352,6 @@ function drawAll(){
 			clearInterval(generateBugTimeout);
 			clearInterval(drawAllInterval);
 			stopMouseClickEvent();
-			if(score > highScore){
-				highScore = score;
-			}
-			localStorage.setItem("highScore", highScore);
 			disablePauseButton();
 			alert("congrats you win");
 		}
@@ -265,8 +359,31 @@ function drawAll(){
 	timerText.innerHTML = timeLeft.toString();
 	drawGameEnvironment();
 	for(var bugIndex in bugs){
+		var makeWay = 0;
+		for(var bugIndex2 in bugs){
+			if(bugs[bugIndex] != bugs[bugIndex2] && bugs[bugIndex].status == ACTIVE && bugs[bugIndex2].status == ACTIVE){
+				var distance = bugs[bugIndex].position.getDistance(bugs[bugIndex2].position.x, bugs[bugIndex2].position.y);
+				if(distance <= 40){
+					if(bugs[bugIndex].speed <= bugs[bugIndex2].speed){
+						var makeWaySpeedX = -bugs[bugIndex].speedY;  //try turn right
+						var makeWaySpeedY = bugs[bugIndex].speedX;
+						var virtualPosition = new Position(bugs[bugIndex].position.x + makeWaySpeedX / 50, bugs[bugIndex].position.y + makeWaySpeedY / 50) 
+						var virtualDistance = virtualPosition.getDistance(bugs[bugIndex2].position.x, bugs[bugIndex2].position.y);
+						if(virtualDistance > distance){  //good guess
+							makeWay = 1;
+						}
+						else{
+							makeWay = 2;
+						}
+						break;
+					}
+				}
+			}
+		}
+		
+
 		if (bugs[bugIndex].status == ACTIVE){
-			bugs[bugIndex].changePosition();
+			bugs[bugIndex].changePosition(makeWay);
 			if (bugs[bugIndex].isNearFoodTarget()){  // food eaten
 				foods[bugs[bugIndex].foodTargetIndex].status = EATEN;
 				foodNumber -= 1;
@@ -277,14 +394,15 @@ function drawAll(){
 				for(var bugIndex2 in bugs){
 					bugs[bugIndex2].getFoodTarget();
 					bugs[bugIndex2].getXYSpeed();
+					bugs[bugIndex2].getAngle();
 				}				
 			}
-			ctx.putImageData(bugs[bugIndex].image, Math.floor(bugs[bugIndex].position.x - bugRadius/2), Math.floor(bugs[bugIndex].position.y - bugRadius/2));
+			bugs[bugIndex].draw();
 		}
 	}
 	for(var foodIndex in foods){
 		if (foods[foodIndex].status == EXIST){
-			ctx.putImageData(foods[foodIndex].image, Math.floor(foods[foodIndex].position.x - foodRadius/2), Math.floor(foods[foodIndex].position.y - foodRadius/2));
+			ctx.drawImage(foodImage, Math.floor(foods[foodIndex].position.x - foodRadius/2), Math.floor(foods[foodIndex].position.y - foodRadius/2));
 		}
 	}
 }
@@ -347,6 +465,7 @@ function generateOneBug(){
 
 function startNewGame(){
 	startTime = new Date().getTime();
+	score = 0;
 	pauseButton.innerHTML = "pause";
 	enablePauseButton();
 	bugs = [];
@@ -358,13 +477,134 @@ function startNewGame(){
 }
 //main
 window.onload = function(){
+	// level = parseInt(localStorage.getItem("level"));
 	level = 1;  
-	// gameContinue = true;
 	drawAndSaveBugImage();  
 	importFoodImage();
 	drawGameEnvironment();
 	startNewGame();
 };
+
+function makeBug(x,y,color){
+      var centerHeadx = x;
+      var centerHeady = y;
+      scale = .50;
+
+      //background
+ 	  ctx.fillStyle = "#FFFFCC";
+ 	  ctx.fillRect(0,0,600,400);
+
+      //whiskers
+      ctx.beginPath();
+      ctx.moveTo(centerHeadx, centerHeady);
+      ctx.lineTo(centerHeadx - 10*scale, centerHeady + 15*scale);
+      ctx.stroke();
+       
+
+      ctx.beginPath();
+      ctx.moveTo(centerHeadx, centerHeady);
+      ctx.lineTo(centerHeadx + 10*scale, centerHeady + 15*scale);
+      ctx.stroke();
+
+      //head
+      ctx.beginPath();
+      ctx.arc(centerHeadx, centerHeady, 10*scale, 0*scale, 2 * Math.PI, false);
+      ctx.lineWidth = 1;
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = '#550000';
+      ctx.stroke();
+      
+      //eyes
+      ctx.beginPath();
+      ctx.arc(centerHeadx - 3*scale, centerHeady + 7*scale, 2*scale, 0*scale, 2*Math.PI);
+      ctx.lineWidth = 1;
+      ctx.fillStyle = 'green';
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(centerHeadx + 3*scale, centerHeady + 7*scale, 2*scale, 0, 2*Math.PI);
+      ctx.lineWidth = 1;
+      ctx.fillStyle = 'green';
+      ctx.fill();
+      ctx.stroke();
+
+
+      //legs
+      ctx.beginPath();
+      ctx.moveTo(centerHeadx, centerHeady-16*scale);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.lineTo(centerHeadx + 30*scale, centerHeady - 30*scale);
+      ctx.stroke();
+                   
+      ctx.beginPath();
+      ctx.moveTo(centerHeadx, centerHeady-16*scale);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.lineTo(centerHeadx + 30*scale, centerHeady);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(centerHeadx, centerHeady-16*scale);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.lineTo(centerHeadx + 30*scale, centerHeady - 14*scale);
+      ctx.stroke();
+
+      //legs-leftside
+      ctx.beginPath();
+      ctx.moveTo(centerHeadx, centerHeady-16*scale);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.lineTo(centerHeadx - 30*scale, centerHeady - 30*scale);
+      ctx.stroke();
+                   
+      ctx.beginPath();
+      ctx.moveTo(centerHeadx, centerHeady-16*scale);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.lineTo(centerHeadx - 30*scale, centerHeady);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(centerHeadx, centerHeady-16*scale);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.lineTo(centerHeadx - 30*scale, centerHeady - 14*scale);
+      ctx.stroke();
+
+
+
+      //body
+
+      drawEllipse(centerHeadx, centerHeady - 20*scale, 35*scale, 43*scale, color);   
+}    
+               
+function drawEllipse(centerX, centerY, width, height, color) {
+      
+  ctx.beginPath();
+  
+  ctx.moveTo(centerX, centerY - height/2); // A1
+  
+  ctx.bezierCurveTo(
+    centerX + width/2, centerY - height/2, // C1
+    centerX + width/2, centerY + height/2, // C2
+    centerX, centerY + height/2); // A2
+
+  ctx.bezierCurveTo(
+    centerX - width/2, centerY + height/2, // C3
+    centerX - width/2, centerY - height/2, // C4
+    centerX, centerY - height/2); // A1
+ 
+  ctx.fillStyle = color;
+  ctx.strokeStyle = '#550000';
+  ctx.lineWidth = 1;
+  ctx.fill();
+  ctx.closePath();  
+  ctx.stroke();
+}
 
 
 
