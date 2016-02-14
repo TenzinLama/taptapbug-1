@@ -322,12 +322,15 @@ function gameLose(){
 	clearInterval(drawAllInterval);
 	stopMouseClickEvent();
 	updateHighScore();
-	// if(score > highScore){
-	// 	highScore = score;
-	// }
-	// localStorage.setItem("highScoreForLevel" + level.toString(), highScore);
+	
 	disablePauseButton();
-	alert("Game Over");
+	//alert("Game Over");
+	if(confirm("Game Over! Your score was " + score.toString() + "! Would you like to restart this Level?") == true){
+		startNewGame();
+	} else{
+		window.location = "startpage.html";
+
+	}
 }
 function updateHighScore(){
 	var key = "highScoreForLevel" + level.toString();
@@ -356,7 +359,7 @@ function drawAll(){
 			alert("congrats you win");
 		}
 	}
-	timerText.innerHTML = timeLeft.toString();
+	timerText.innerHTML = "Time left: " + timeLeft.toString();
 	drawGameEnvironment();
 	for(var bugIndex in bugs){
 		var makeWay = 0;
@@ -447,7 +450,7 @@ function startMouseClickEvent(){
 			if(bugs[bugIndex].status == ACTIVE && bugs[bugIndex].position.getDistance(mouseX, mouseY) < bugRadius){
 				bugs[bugIndex].status = KILLED;
 				score += bugs[bugIndex].score;
-				scoreText.innerHTML = score.toString();
+				scoreText.innerHTML = "Score: " + score.toString();
 				return;
 			}
 		}
@@ -467,6 +470,7 @@ function startNewGame(){
 	startTime = new Date().getTime();
 	score = 0;
 	pauseButton.innerHTML = "pause";
+	scoreText.innerHTML = "Score: 0";
 	enablePauseButton();
 	bugs = [];
 	enablePauseButton();
@@ -477,8 +481,8 @@ function startNewGame(){
 }
 //main
 window.onload = function(){
-	// level = parseInt(localStorage.getItem("level"));
-	level = 1;  
+	level = parseInt(localStorage.getItem("level"));
+	//level = 1;  
 	drawAndSaveBugImage();  
 	importFoodImage();
 	drawGameEnvironment();
