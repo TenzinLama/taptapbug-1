@@ -1,26 +1,30 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<link href='https://fonts.googleapis.com/css?family=Amatic+SC' rel='stylesheet' type='text/css'>
+
 		<title>
-			Canvas
+			Tap Tap Bug
 		</title>
 		<link type="text/css" rel="stylesheet" href="style.css" />
 	</head>
 
 	<body>
-		<div id="gameMenu">
-			<div id="timer" class="inGameMenu">
-				60
+		<div id = "mainDiv" class = "center">
+			<div id="gameMenu" class = "center">
+				<div id="timer" class="inGameMenu">
+					Time left: 60
+				</div>
+				<div class="inGameMenu">
+					<button id="pause">pause</button>
+				</div>
+				<div id="score" class="inGameMenu">
+					Score: 0
+				</div>
 			</div>
-			<div class="inGameMenu">
-				<button id="pause">pause</button>
-			</div>
-			<div id="score" class="inGameMenu">
-				0
-			</div>
+			<canvas id="myCanvas" width="600" height="400">
+			</canvas>
 		</div>
-		<canvas id="myCanvas" width="600" height="400">
-		</canvas>
 		<img src="smallFood.jpg" alt="foodImage" id="foodImage">
 		<img id="redBugImage" >
 		<img id="blackBugImage">
