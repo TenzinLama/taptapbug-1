@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+	<head>
+
+		<link href='https://fonts.googleapis.com/css?family=Amatic+SC' rel='stylesheet' type='text/css'>
+		<link type="text/css" rel="stylesheet" href="startpagestyle.css" />
+		<title> Tap Tap Bug </title>
+		<style>
+
+		
+
+
+		</style>
+	</head>
+	<body>
+
+		<div id = "container">
+
+
+			<div id = "startscreen-container" class = "center">
+				
+				
+					<h1 id = "gameTitle"><span class = "bigfont"><span class = "red">Tap</span> <span class="black">Tap</span> <span class = "orange">Bug</span></span></h1>
+			
+				<h2 id = "levelTag"> Choose a Level! </h2>
+				<form id = "levelform">
+					<input type = "radio" checked = "checked" name = "level" value = "Level1" id = "level1Button" onclick = "updateHighScoreLevel1()"><span id = "level1buttontext">1</span>
+					<input type = "radio" name = "level" value = "Level2" id = "level2Button" onclick = "updateHighScoreLevel2()">2
+				</form>
+				<h2>High Score: <span id = "highScore">0 Points</span><h2> 
+
+				<a href= "index.html"><button id = "startButton">Start Game</button></a>
+
+				<!-- <img src = "images/cake.png" id = "cake"/> -->
+
+			</div>
+
+
+
+		</div>
+
+
+	<script>
+
+		function updateHighScoreLevel1(){
+			//store level picked in local storage
+			localStorage.setItem("level", "1");
+			if(localStorage.getItem("highScoreForLevel1") == null){
+				document.getElementById("highScore").innerHTML = "0 Points";
+			}
+			else{
+				document.getElementById("highScore").innerHTML = localStorage.highScoreForLevel1 + " Points!";
+				document.getElementById("highScore").style.color = "green";
+			}
+
+		}
+		//initial value of highscore for when user first loads browser... incase score is in localstorage
+		if(document.getElementById("level1Button").checked){
+			if(localStorage.getItem("highScoreForLevel1") == null){
+				document.getElementById("highScore").innerHTML = "0 Points";
+			}
+			else{
+				document.getElementById("highScore").innerHTML = localStorage.highScoreForLevel1 + " Points!";
+				document.getElementById("highScore").style.color = "green";
+			}
+
+		}
+
+		function updateHighScoreLevel2(){
+			localStorage.setItem("level", "2");
+			//document.getElementById('highScore').innerHTML = 
+			if(localStorage.getItem("highScoreForLevel2") == null){
+				document.getElementById("highScore").innerHTML = "0 Points";
+			}
+			else{
+				document.getElementById("highScore").innerHTML = localStorage.highScoreForLevel2 + " Points!";
+				document.getElementById("highScore").style.color = "green";
+
+			}
+
+		}
+
+
+		
+		
+	</script>
+
+	</body>
+
+	</html>
